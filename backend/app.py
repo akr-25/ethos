@@ -19,7 +19,7 @@ def hello_world():
 @app.route("/search-sync/<query>")
 def search(query):
     args = request.args
-    num = int(args.get("num", 10))
+    num = int(args.get("num", 50))
     smart_article_extractor_body = {
     "articleUrls": [
         
@@ -35,10 +35,7 @@ def search(query):
         "query": query
     }
 
-    # 1. Get the links from Google News Search
     news_response = requests.post(GOOGLE_NEWS_SEARCH_API, json=google_news_search_body, params={"token": APIFY_TOKEN})
-    print(news_response.json())
-    print(google_news_search_body)
 
     for each in news_response.json():
         smart_article_extractor_body["articleUrls"].append({
@@ -54,4 +51,25 @@ def search(query):
     return jsonify({
         "gnews": news_response.json(),
         "articles": article_response.json()
+    })
+
+@app.route("/search-sync-gnews/<query>")
+def search_gnews(query):
+
+    args = request.args
+    num = int(args.get("num", 50))
+    google_news_search_body={
+        "extractImages": False,
+        "language": "US:en",
+        "maxItems": num,
+        "proxyConfiguration": {
+            "useApifyProxy": True
+        },
+        "query": query
+    }
+
+    news_response = requests.post(GOOGLE_NEWS_SEARCH_API, json=google_news_search_body, params={"token": APIFY_TOKEN})
+
+    return jsonify({
+        "gnews": news_response.json()
     })
