@@ -1,0 +1,21 @@
+#default-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 23px;
+  height: 24px;
+  border: 0;
+  fill: black;
+  color: black;
+  background: url('icons8-triangle-arrow-24.png');
+  cursor: pointer;
+}
+
+#default-range::-moz-range-thumb {
+  width: 23px;
+  height: 25px;
+  border: 0;
+  fill: black;
+  background: url('icons8-triangle-arrow-24.png');
+  cursor: pointer;
+  color: black;
+}

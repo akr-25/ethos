@@ -16,22 +16,20 @@ export default function App() {
     // <Router>
     <div className="flex min-h-screen flex-col dark:bg-gray-700 dark:text-white">
       <Navbar />
-      <div className="flex-1 flex flex-col">
-        <Switch>
-          <Route exact path="/">
-            <Home />
-          </Route>
-          <Route path="/register">
-            {user ? <Redirect to="/" /> : <Register />}
-          </Route>
-          <Route path="/login" >
-            {user ? <Redirect to="/" /> : <Login />}
-          </Route>
-          <Route path="*">
-            <Error404 />
-          </Route>
-        </Switch>
-      </div>
+      <Switch>
+        <Route exact path="/">
+          <Home />
+        </Route>
+        <Route path="/register">
+          {user ? <Redirect to="/" /> : <Register />}
+        </Route>
+        <Route path="/login" >
+          {user ? <Redirect to="/" /> : <Login />}
+        </Route>
+        <Route path="*">
+          <Error404 />
+        </Route>
+      </Switch>
       <Footer />
     </div>
     // </Router>

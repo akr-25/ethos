@@ -1,15 +1,22 @@
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv   #for python-dotenv method
+import spacy
+from spacytextblob.spacytextblob import SpacyTextBlob
+import pandas as pd
 import os 
 import requests
-
+from flask_cors import CORS
+from sentiment import sentiment_analysis
 
 load_dotenv()                    #for python-dotenv method
 APIFY_TOKEN = os.environ.get('APIFY_TOKEN')
 GOOGLE_NEWS_SEARCH_API = os.environ.get('GOOGLE_NEWS_SEARCH_API')
 NEWS_EXTRACTOR_API = os.environ.get('NEWS_EXTRACTOR_API')
+APIFY_TOKEN_AMAN = os.environ.get('APIFY_TOKEN_AMAN')
 
 app = Flask(__name__)
+
+CORS(app)
 
 @app.route("/")
 def hello_world():
@@ -64,6 +71,7 @@ def search(query):
         })
 
     articles = article_response.json()
+    articles = sentiment_analysis(articles)
 
     return jsonify({
         "gnews": news_response.json(),

@@ -1,0 +1,32 @@
+{
+  "0": {
+    "paragraphs": {
+      "0": {
+        "whole_sentiment": 0.4,
+        "sentences": {
+          "0": {
+            "text": "This is a text.",
+            "sentiment": 0.4
+          },
+          "1": {
+            "text": "This is a text.",
+            "sentiment": 0.4
+          }
+        }
+      },
+      "1": {
+        "whole_sentiment": 0.4,
+        "sentences": {
+          "0": {
+            "text": "This is a text.",
+            "sentiment": 0.4
+          },
+          "1": {
+            "text": "This is a text.",
+            "sentiment": 0.4
+          }
+        }
+      } 
+    } 
+  }
+}
