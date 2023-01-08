@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
 import { useContext, useRef } from "react";
 import axios from "axios";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Login = () => {
   const emailRef = useRef();
@@ -16,7 +17,7 @@ const Login = () => {
     const password = passwordRef.current.value;
     dispatch({ type: "LOGIN_START" });
     try {
-      const res = await axios.post("http://localhost:5000/auth/login", {
+      const res = await axios.post(`${BACKEND_URL}/auth/login`, {
         email,
         password,
       }, {

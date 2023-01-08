@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const selectedTabCSS =
   "text-gray-800 dark:text-white  hover:text-gray-800 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium";
@@ -23,7 +24,7 @@ const Navbar = () => {
     localStorage.clear();
     history.go(0);
 
-    await axios.post("http://localhost:5000/auth/logout");
+    await axios.post(`${BACKEND_URL}/auth/logout`);
   };
 
   useEffect(() => {

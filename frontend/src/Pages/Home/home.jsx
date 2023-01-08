@@ -22,6 +22,7 @@ import sampleNews from "../../sample/gnews100.json";
 import sampleArticles from "../../sample/dawood_with_sentiment.json";
 import "./style.css";
 import * as ss from "simple-statistics";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const Home = () => {
   const stateEnum = useMemo(() => {
@@ -276,7 +277,7 @@ const Home = () => {
     try {
       const params = new URLSearchParams([["num", numberOfArticles || 20]]);
       const response = await axios.get(
-        "http://localhost:5000/search-sync-gnews/" + query,
+        `${BACKEND_URL}/search-sync-gnews/` + query,
         {
           params,
         }
@@ -303,7 +304,7 @@ const Home = () => {
     try {
       const params = new URLSearchParams([["num", numberOfArticles || 20]]);
       const response = await axios.get(
-        "http://localhost:5000/search-sync/" + query,
+        `${BACKEND_URL}/search-sync/` + query,
         {
           params,
         }
