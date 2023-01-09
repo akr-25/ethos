@@ -103,6 +103,16 @@ export function StatusPill({ value }) {
   );
 }
 
+export function queryCell({ value, column, cell }) {
+  return (
+    <div className='flex items-center'>
+      <div className='flex-shrink-0 h-10 w-10'>
+        <span className='text-lg text-gray-500'>{value}</span>
+      </div>
+    </div>
+  );
+}
+
 export function AvatarCell({ value, column, row }) {
   return (
     <div className='flex items-center'>

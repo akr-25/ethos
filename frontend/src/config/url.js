@@ -1,0 +1,1 @@
+export const REACT_APP_BACKEND_URL = "https://ethos-1.amankumar378.repl.co";

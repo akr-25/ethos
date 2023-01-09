@@ -1,6 +1,5 @@
-import axios from "axios";
-import React, { useMemo } from "react";
-import { useRef, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import sampleData from "../../sample/sample_with_sentiment.json";
 import Table, {
   AvatarCell,
   dateCell,
@@ -8,6 +7,7 @@ import Table, {
   linkCell,
   sourceCell,
   titleCell,
+  queryCell,
 } from "../../Components/Table";
 import {
   BarChart,
@@ -18,20 +18,52 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import "./style.css";
 import * as ss from "simple-statistics";
+import axios from "axios";
 import { REACT_APP_BACKEND_URL as BACKEND_URL } from "../../config/url";
 
-const Home = () => {
+const History = () => {
+  const [fetchedData, setFetchedData] = useState(null);
+
+  const data = useMemo(() => {
+    if (!fetchedData) return null;
+    return fetchedData["history"].map((news, index) => {
+      // let sentiment = news["sentiment"];
+      return { ...news, index: index, id: index + 1 };
+    });
+  }, [fetchedData]);
+  console.log(data);
+
   const stateEnum = useMemo(() => {
     return {
-      Home: 0,
-      Loading: 1,
-      NewsResults: 2,
-      ArticleResults: 3,
-      Error: 4,
+      History: 0,
+      View: 1,
+      Error: 2,
     };
   }, []);
+
+  const [state, setState] = useState(stateEnum.History);
+  const [selected, setSelected] = useState(-1);
+
+  useEffect(() => {
+    console.log("History");
+    const fetchData = async () => {
+      try {
+        const result = await axios.get(`${BACKEND_URL}/history`);
+        setFetchedData(result.data);
+      } catch (error) {
+        setState(stateEnum.Error);
+      }
+    };
+    fetchData();
+  }, [stateEnum]);
+
+  const gnewsData = useMemo(() => {
+    if (selected === -1 || !data[selected]["gnews"]) return null;
+    return data[selected]["gnews"].map((news, index) => {
+      return { ...news, index: index + 1 };
+    });
+  }, [data, selected]);
 
   const tabsEnum = useMemo(() => {
     return {
@@ -42,40 +74,13 @@ const Home = () => {
     };
   }, []);
 
-  const [query, setQuery] = useState(null);
-  const [numberOfArticles, setNumberOfArticles] = useState(20);
-  const [gnews, setGnews] = useState();
-  const [articles, setArticles] = useState();
-  const [state, setState] = useState(stateEnum.Home);
-  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(100);
   const [articleNumber, setArticleNumber] = useState(0);
   const [selectedTab, setSelectedTab] = useState(tabsEnum.Overview);
-  const [totalData, setTotalData] = useState();
-
-  const options = [5, 10, 20, 50, 100, 200];
-  const [apiCall, setApiCall] = useState("SERP API + newspaper");
-  const apiOptions = ["SERP API + newspaper", "APIFY"];
 
   // const imageAccessor = useMemo(() => {
-  //   return apiCall === "APIFY" ? "image" : "thumbnail";
-  // }, [apiCall]);
-
-  useEffect(() => {
-    let myInterval = setInterval(() => {
-      if (
-        estimatedTimeRemaining > 0 &&
-        (state === stateEnum.Loading || state === stateEnum.NewsResults)
-      ) {
-        setEstimatedTimeRemaining(
-          (estimatedTimeRemaining) => estimatedTimeRemaining - 1
-        );
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(myInterval);
-    };
-  }, [estimatedTimeRemaining, state, stateEnum]);
+  //   if (selected === -1) return "image";
+  //   return data[selected]["api"] === "APIFY" ? "image" : "thumbnail";
+  // }, [data, selected]);
 
   const columns = useMemo(
     () => [
@@ -83,12 +88,6 @@ const Home = () => {
         Header: "#",
         accessor: "index",
       },
-      // apiCall !== "APIFY" && 
-      // {
-      //   Header: "Image",
-      //   accessor: imageAccessor,
-      //   Cell: imageCell,
-      // },
       {
         Header: "Title",
         accessor: "title",
@@ -131,21 +130,14 @@ const Home = () => {
     []
   );
 
-  const gnewsData = useMemo(() => {
-    if (!gnews) return null;
-    return gnews.map((news, index) => {
-      return { ...news, index: index + 1 };
-    });
-  }, [gnews]);
-
   const articleData = useMemo(() => {
-    if (!articles) return null;
-    for (let i = 0; i < articles.length; i++) {
+    if (selected === -1) return null;
+    for (let i = 0; i < data[selected]["articles"].length; i++) {
       let mostPositive = "";
       let mostPosValue = -1;
       let mostNegative = "";
       let mostNegValue = 1;
-      articles[i]["paragraphs"].forEach((paragraph) => {
+      data[selected]["articles"][i]["paragraphs"].forEach((paragraph) => {
         paragraph.forEach((sentence) => {
           if (
             sentence.sentiment > mostPosValue &&
@@ -163,44 +155,44 @@ const Home = () => {
           }
         });
       });
-      articles[i].mostPositive = mostPositive;
-      articles[i].mostNegative = mostNegative;
+      data[selected]["articles"][i].mostPositive = mostPositive;
+      data[selected]["articles"][i].mostNegative = mostNegative;
     }
 
-    // Sorting the articles by absolute sentiment
-    articles.sort((a, b) => {
+    // Sorting the data[selected]["articles"] by absolute sentiment
+    data[selected]["articles"].sort((a, b) => {
       return Math.abs(b.sentiment) - Math.abs(a.sentiment);
     });
 
-    return articles.map((news, index) => {
+    return data[selected]["articles"].map((news, index) => {
       return { ...news, index: index + 1 };
     });
-  }, [articles]);
+  }, [data, selected]);
 
   const barGraphData = useMemo(() => {
-    if (!articles) return null;
-    let data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].map((value, index) => {
+    if (selected === -1) return null;
+    let data2 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].map((value, index) => {
       return {
         name: (index - 5) / 5,
         uv: 0,
       };
     });
-    for (let i = 0; i < articles.length; i++) {
-      let sentiment = articles[i].sentiment;
+    for (let i = 0; i < data[selected]["articles"].length; i++) {
+      let sentiment = data[selected]["articles"][i].sentiment;
       let index = Math.floor((sentiment + 1) * 5);
-      data[index].uv += 1;
+      data2[index].uv += 1;
     }
-    console.log(data);
-    return data;
-  }, [articles]);
+    console.log(data2);
+    return data2;
+  }, [data, selected]);
 
   const mostNegativeData = useMemo(() => {
-    if (!articles) return null;
-    let data = articles;
+    if (selected === -1) return null;
+    let data2 = data[selected]["articles"];
 
     let sentences = [];
-    for (let i = 0; i < data.length; i++) {
-      let article = data[i];
+    for (let i = 0; i < data2.length; i++) {
+      let article = data2[i];
       for (let j = 0; j < article.paragraphs.length; j++) {
         let paragraph = article.paragraphs[j];
         for (let k = 0; k < paragraph.length; k++) {
@@ -217,28 +209,29 @@ const Home = () => {
       .slice(0, 10);
 
     return sentences;
-  }, [articles]);
+  }, [data, selected]);
 
   const sentimentScores = useMemo(() => {
-    if (!articles) return null;
+    if (selected === -1) return null;
 
     let scores = [];
-    articles.forEach((article) => {
+    data[selected]["articles"].forEach((article) => {
       scores.push(article.sentiment);
     });
 
     scores.sort((a, b) => a - b);
 
     return scores;
-  }, [articles]);
+  }, [data, selected]);
+  console.log(sentimentScores);
 
   const mostPositiveData = useMemo(() => {
-    if (!articles) return null;
-    let data = articles;
+    if (selected === -1) return null;
+    let data2 = data[selected]["articles"];
 
     let sentences = [];
-    for (let i = 0; i < data.length; i++) {
-      let article = data[i];
+    for (let i = 0; i < data2.length; i++) {
+      let article = data2[i];
       for (let j = 0; j < article.paragraphs.length; j++) {
         let paragraph = article.paragraphs[j];
         for (let k = 0; k < paragraph.length; k++) {
@@ -258,7 +251,7 @@ const Home = () => {
       .slice(0, 10);
 
     return sentences;
-  }, [articles]);
+  }, [selected, data]);
 
   const changeArticleNumber = (isNext) => {
     if (isNext && articleNumber < articleData.length - 1) {
@@ -268,189 +261,76 @@ const Home = () => {
     }
   };
 
-  const predict = async (e) => {
-    e.preventDefault();
-    console.log(query);
-    if (query) {
-      setState(stateEnum.Loading);
-      let time = 180;
-      if (apiCall === apiOptions[0]) {
-        time = 20 + numberOfArticles;
-      } else if (apiCall === apiOptions[1]) {
-        time = 180;
-      } else {
-        time = 20 + numberOfArticles;
-      }
+  const historyColumn = useMemo(
+    () => [
+      {
+        Header: "#",
+        accessor: "id",
+      },
+      {
+        Header: "Query",
+        accessor: "name",
+      },
+      // {
+      //   Header: "Person Behaviour",
+      //   accessor: "person",
+      // },
+      {
+        Header: "Score",
+        accessor: "sentiment",
+        Cell: ({ value }) => (
+          <div
+            className={`${
+              value > 0 ? "text-green-500" : "text-red-500"
+            } text-white font-bold text-left`}
+          >
+            {value.toFixed(2)}
+          </div>
+        ),
+      },
+      {
+        Header: "Number of Articles",
+        accessor: "length",
+      },
+      {
+        Header: "API Used",
+        accessor: "api",
+      },
+      {
+        Header: "Date",
+        accessor: "date"
+      },
+      {
+        Header: "View",
+        accessor: "index",
+        Cell: ({ value }) => (
+          <div className='flex  justify-center'>
+            <button
+              className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+              onClick={() => {
+                setSelected(value);
+                setState(stateEnum.View);
+              }}
+            >
+              Click to Open
+            </button>
+          </div>
+        ),
+      },
+    ],
 
-      setEstimatedTimeRemaining(time);
-      // getGnewsData();
-      getArticleData();
-    }
-  };
-
-  const getGnewsData = async () => {
-    try {
-      const params = new URLSearchParams([["num", numberOfArticles || 20]]);
-      const response = await axios.get(
-        `${BACKEND_URL}/search-sync-gnews/` + query,
-        {
-          params,
-        }
-      );
-      console.log(response.data);
-      if (
-        response.data &&
-        response.data["code"] &&
-        response.data["code"] !== 200 &&
-        response.data["code"] !== 201
-      ) {
-        setState(stateEnum.Error);
-      }
-      if (state === stateEnum.Loading) {
-        setGnews(response.data["gnews"]);
-        setState(stateEnum.NewsResults);
-      }
-    } catch (err) {
-      setState(stateEnum.Error);
-    }
-  };
-
-  const getArticleData = async (e) => {
-    try {
-      const params = new URLSearchParams([["num", numberOfArticles || 20]]);
-      let url;
-      if (apiCall === apiOptions[0]) {
-        url = `${BACKEND_URL}/search-newspaper/` + query;
-      } else if (apiCall === apiOptions[1]) {
-        url = `${BACKEND_URL}/search-sync/` + query;
-      } else {
-        url = `${BACKEND_URL}/search-newspaper/` + query;
-      }
-      const response = await axios.get(url, {
-        params,
-      });
-      console.log(response.data);
-      if (
-        response.data &&
-        response.data["code"] &&
-        response.data["code"] !== 200 &&
-        response.data["code"] !== 201
-      ) {
-        setState(stateEnum.Error);
-      }
-      setArticles(response.data["articles"]);
-      setGnews(response.data["gnews"]);
-      setTotalData(response.data);
-      setState(stateEnum.ArticleResults);
-    } catch (err) {
-      setState(stateEnum.Error);
-    }
-  };
+    [stateEnum]
+  );
 
   return (
-    <div className='flex-1 flex flex-col bg-gray-100'>
-      {state === stateEnum.Home && (
-        <div className='max-w-7xl mx-auto px-8 py-10 mt-32'>
-          <h1 className='text-4xl text-center'>
-            {" "}
-            News Article Sentiment Analysis{" "}
-          </h1>
-          <br></br>
-          <br></br>
-
-          <form>
-            <label
-              htmlFor='default-search'
-              className='mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white'
-            >
-              Search
-            </label>
-            <div className='relative'>
-              <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                <svg
-                  aria-hidden='true'
-                  className='w-5 h-5 text-gray-500 dark:text-gray-400'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                  xmlns='http://www.w3.org/2000/svg'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                  />
-                </svg>
-              </div>
-              <input
-                type='search'
-                id='default-search'
-                className='block w-full p-6 pl-10 text-2xl text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500'
-                placeholder='e.g. Ryan Goshlings'
-                required
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                }}
-              />
-              <button
-                className='text-white absolute right-2.5 bottom-[1.35rem] bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
-                type='submit'
-                onClick={(e) => predict(e)}
-              >
-                Search
-              </button>
-            </div>
-            {/* Horizontal buttons to select the option from options array */}
-            <div className='flex items-center justify-center p-2 m-2'>
-              <p>Number of articles to display:</p>
-              {options.map((option, index) => (
-                <button
-                  key={index}
-                  type='button'
-                  className={`text-white ${
-                    numberOfArticles !== option
-                      ? "bg-blue-400 dark:bg-blue-400"
-                      : "bg-blue-600 dark:bg-blue-600"
-                  } hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2  m-2  dark:hover:bg-blue-700 dark:focus:ring-blue-800`}
-                  onClick={() => {
-                    setNumberOfArticles(option);
-                  }}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-            {/* Horizontal buttons to select the api method */}
-            <div className='flex items-center justify-center p-2 m-2'>
-              <p>API Method:</p>
-              {apiOptions.map((method, index) => (
-                <button
-                  key={index}
-                  type='button'
-                  className={`text-white ${
-                    apiCall !== method
-                      ? "bg-blue-400 dark:bg-blue-400"
-                      : "bg-blue-600 dark:bg-blue-600"
-                  } hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2  m-2  dark:hover:bg-blue-700 dark:focus:ring-blue-800`}
-                  onClick={() => {
-                    setApiCall(method);
-                  }}
-                >
-                  {method}
-                </button>
-              ))}
-            </div>
-          </form>
-        </div>
-      )}
+    <>
       {/* Round arrow Back Button on the top below navbar if the state is not 0*/}
-      {state !== stateEnum.Home && (
+      {state !== stateEnum.History && (
         <div className='xl:block hidden absolute top-20 left-20 m-4'>
           <button
             className='text-white focus:ring-4 focus:outline-none shadow-lg hover:bg-slate-50 focus:ring-blue-300 font-medium rounded-full text-sm p-4 '
             onClick={() => {
-              setState(0);
+              setState(stateEnum.History);
             }}
           >
             {/* Blue color */}
@@ -472,34 +352,50 @@ const Home = () => {
         </div>
       )}
 
-      {/* Loading State with estimated remaining time*/}
-      {state === stateEnum.Loading && (
-        <div className='flex flex-col items-center justify-center flex-1  mb-20'>
-          <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 m-4'></div>
-          <h1 className='text-4xl text-center'>
-            {estimatedTimeRemaining === 0
-              ? "Please wait...\nIt's taking longer than expected"
-              : `Estimated Waiting Time ${estimatedTimeRemaining}s`}
-          </h1>
+      {state === stateEnum.History && (
+        <div className='text-gray-900 flex items-center justify-center flex-1 my-20 flex-col mx-20'>
+          <div className='shadow-lg rounded-md pb-4 flex-1 text-3xl max-w-5xl w-full bg-white relative'>
+            <p className='p-8 border-b-4 text-center'>History</p>
+            <main className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-base'>
+              <div className='mt-6'>
+                {(!data || (data && data.length === 0)) && (
+                  <div className='text-center'>
+                    <p className='text-2xl'>No History Found</p>
+                  </div>
+                )}
+                {data && data.length > 0 && (
+                  <Table columns={historyColumn} data={data} />
+                )}
+              </div>
+            </main>
+          </div>
         </div>
       )}
 
-      {/* Loading for article */}
-      {state === stateEnum.NewsResults && (
-        <div className='flex flex-col items-center justify-center flex-1  mb-20'>
-          <div className='animate-spin rounded-full h-20 w-20 border-b-2 border-gray-900 m-4'></div>
-          <h1 className='text-2xl text-center'>
-            {estimatedTimeRemaining === 0
-              ? "Please wait...\nIt's taking longer than expected"
-              : `Loading Articles...Estimated Waiting Time ${estimatedTimeRemaining}s`}
-          </h1>
+      {/* Error State */}
+      {state === stateEnum.Error && (
+        <div className='text-gray-900 flex items-center justify-center flex-1'>
+          <main className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 bg-white shadow-lg m-12 rounded-md'>
+            <div className='text-3xl text-center'>
+              {" "}
+              Error Occured, Please Try Again{" "}
+              <button
+                className='flex m-4'
+                onClick={() => {
+                  setState(stateEnum.History);
+                }}
+              >
+                <span className='text-base'>Go Back</span>
+              </button>
+            </div>
+          </main>
         </div>
       )}
-      {/* Article Result State */}
-      {state === stateEnum.ArticleResults && (
+
+      {state === stateEnum.View && (
         <>
           <div className='text-gray-900 flex items-center justify-center flex-1 my-20 flex-col'>
-            <p className='mt-4 text-5xl mb-8'>Query: {query}</p>
+            <p className='mt-4 text-5xl mb-8'>Query: {data[selected].name}</p>
             <div className='shadow-lg rounded-md flex-1 text-3xl max-w-5xl text-center w-full bg-white relative'>
               <p className='p-2 my-2'>Summary</p>
               <div className='grid grid-cols-12 border-t-4'>
@@ -610,9 +506,9 @@ const Home = () => {
                           {/* Good Neutral Bad Person based on avg sentiment */}
                           <p className='text-center'>Nature of Person</p>
                           <p className='text-center bg-slate-100 rounded-full'>
-                            {totalData.sentiment > 0.1
+                            {data[selected].sentiment > 0.1
                               ? "Good"
-                              : totalData.sentiment < -0.1
+                              : data[selected].sentiment < -0.1
                               ? "Bad"
                               : "Neutral"}
                           </p>
@@ -621,13 +517,12 @@ const Home = () => {
                             passages
                           </p>
                           <p className='text-center bg-slate-100 rounded-full'>
-                            {totalData.sentiment.toFixed(2)}
+                            {data[selected].sentiment.toFixed(2)}
                           </p>
-                          {/* Happy Neutral Sad emoji based on sentiment */}
                           <p className='text-center p-8 mt-3 rounded-full text-[5rem]'>
-                            {totalData.sentiment > 0.1
+                            {data[selected].sentiment > 0.1
                               ? "😀"
-                              : totalData.sentiment < -0.1
+                              : data[selected].sentiment < -0.1
                               ? "😞"
                               : "😐"}
                           </p>
@@ -662,9 +557,7 @@ const Home = () => {
                     {articleData[articleNumber].title}
                   </h1>
                   <p className='text-sm mb-2'>
-                    {articleData[articleNumber].hasOwnProperty("publisher")
-                      ? articleData[articleNumber].publisher
-                      : "No Publisher"}
+                    {articleData[articleNumber].publisher}
                   </p>
                   <a
                     href={articleData[articleNumber].loadedUrl}
@@ -685,10 +578,10 @@ const Home = () => {
                             <span
                               key={index + paraIndex * 1000}
                               className={`
-                         ${
-                           sentence.sentiment >
-                             ss.quantile(sentimentScores, 0.8) && "bg-green-500"
-                         }
+                        ${
+                          sentence.sentiment >
+                            ss.quantile(sentimentScores, 0.8) && "bg-green-500"
+                        }
                         ${
                           sentence.sentiment <
                             ss.quantile(sentimentScores, 0.2) && "bg-red-500"
@@ -804,48 +697,23 @@ const Home = () => {
               </div>
             </div>
           </div>
+          <div className='text-gray-900 flex items-center justify-center flex-1 my-20 flex-col'>
+            <div className='shadow-lg rounded-md pb-4 flex-1 text-3xl max-w-5xl text-center w-full bg-white relative'>
+              <p className='p-8 border-b-4'>Google News Search Result</p>
+              <main className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-base'>
+                <div className='mt-6 md:hidden block'>
+                  <Table columns={gnewsColumnsMobile} data={gnewsData} />
+                </div>
+                <div className='mt-6 hidden md:block'>
+                  <Table columns={columns} data={gnewsData} />
+                </div>
+              </main>
+            </div>
+          </div>
         </>
       )}
-
-      {/* News Result State */}
-      {(state === stateEnum.NewsResults ||
-        state === stateEnum.ArticleResults) && (
-        <div className='text-gray-900 flex items-center justify-center flex-1 my-20 flex-col'>
-          <div className='shadow-lg rounded-md pb-4 flex-1 text-3xl max-w-5xl text-center w-full bg-white relative'>
-            <p className='p-8 border-b-4'>Google News Search Result</p>
-            <main className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-base'>
-              <div className='mt-6 md:hidden block'>
-                <Table columns={gnewsColumnsMobile} data={gnewsData} />
-              </div>
-              <div className='mt-6 hidden md:block'>
-                <Table columns={columns} data={gnewsData} />
-              </div>
-            </main>
-          </div>
-        </div>
-      )}
-
-      {/* Error State */}
-      {state === stateEnum.Error && (
-        <div className='text-gray-900 flex items-center justify-center flex-1'>
-          <main className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 bg-white shadow-lg m-12 rounded-md'>
-            <div className='text-3xl text-center'>
-              {" "}
-              Error Occured, Please Try Again{" "}
-              <button
-                className='flex m-4'
-                onClick={() => {
-                  setState(stateEnum.Home);
-                }}
-              >
-                <span className='text-base'>Go Back</span>
-              </button>
-            </div>
-          </main>
-        </div>
-      )}
-    </div>
+    </>
   );
 };
 
-export default Home;
+export default History;

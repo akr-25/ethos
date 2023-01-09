@@ -7,6 +7,9 @@ import Login from "./Pages/Login/login";
 import Register from "./Pages/Register/register";
 import { AuthContext } from "./context/authContext";
 import { useContext } from "react";
+import History from "./Pages/History/history";
+import How from "./Pages/HowItWorks/how";
+import Aboutus from "./Pages/AboutUs/aboutus";
 
 export default function App() {
 
@@ -23,8 +26,17 @@ export default function App() {
         <Route path="/register">
           {user ? <Redirect to="/" /> : <Register />}
         </Route>
+        <Route path="/history">
+          <History />
+        </Route>
         <Route path="/login" >
           {user ? <Redirect to="/" /> : <Login />}
+        </Route>
+        <Route path="/how-to">
+          <How />
+        </Route>
+        <Route path="/about-us">
+          <Aboutus />
         </Route>
         <Route path="*">
           <Error404 />

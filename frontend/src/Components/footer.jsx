@@ -11,7 +11,7 @@ const Footer = () => {
               href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
               className='text-white'
             >
-              Hand Detection using Tensorflow.js
+              News Article Sentiment Analysis
             </a>
           </p>
         </footer>

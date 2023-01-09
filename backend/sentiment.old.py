@@ -3,7 +3,7 @@ import spacy
 from spacytextblob.spacytextblob import SpacyTextBlob
 import json
 
-def sentiment_analysis(name, articles):
+def sentiment_analysis(articles):
     #Load Model
     nlp = spacy.load('en_core_web_sm')
     nlp.add_pipe('spacytextblob')

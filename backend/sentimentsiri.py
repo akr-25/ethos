@@ -4,7 +4,6 @@ from spacytextblob.spacytextblob import SpacyTextBlob
 import json
 
 def sentiment_analysis(name, articles):
-    #Load Model
     nlp = spacy.load('en_core_web_sm')
     nlp.add_pipe('spacytextblob')
 
@@ -16,6 +15,7 @@ def sentiment_analysis(name, articles):
           "index": i
         })
     df_raw = json.dumps(df_raw)
+
     df = pd.read_json(df_raw)
     news_articles = df.text
 
@@ -26,20 +26,39 @@ def sentiment_analysis(name, articles):
 
         lst = []
         for j in range(0, x):
-            curr = (df['text'].loc[i][j]).split(".")
+            curr = nlp(df['text'].loc[i][j])
             lst.append(curr)
 
         df['text'].loc[i] = lst
 
+
+    first_name = [(name.split(' '))[0]]
+    first_name.append(first_name[0].lower())
     #sentiment of each sentence
     sentiment_article = []
     for i in range(len(df.text)):
+        news_articles[i] = ""
+
         sentiment_para = []
         for j in range(len(df.text[i])):
             sentiment_line = []
             for k in range(len(df.text[i][j])):
-                value = nlp(df.text[i][j][k])._.blob.polarity
-                sentiment_line.append(value)
+                split_sentence = (df.text[i][j][k].text).split(' ')
+
+                a = 0
+                for word in first_name:
+                    if word in split_sentence:
+                        a = 1
+                        break
+                    
+                if (a == 1):
+                    value = nlp(df.text[i][j][k].text)._.blob.polarity
+                    sentiment_line.append(value)
+                    news_articles[i] += f"{df.text[i][j][k].text}. "
+
+                else:
+                    sentiment_line.append(0)
+                    
             sentiment_para.append(sentiment_line)
         sentiment_article.append(sentiment_para)
 
@@ -63,8 +82,13 @@ def sentiment_analysis(name, articles):
     
                 sentences.append(sentiment)
     
-            paras.append( sentences)
+            paras.append(sentences)
   
         articles[i]["paragraphs"] = paras
     
     return articles
+
+f = json.load(open("response200.json"))
+name = "ryan"
+results = sentiment_analysis(name, f["articles"][0:2])
+print(results[0]["paragraphs"])

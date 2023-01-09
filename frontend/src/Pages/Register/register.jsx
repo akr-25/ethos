@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
 import { useContext } from "react";
 import axios from "axios";
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+import { REACT_APP_BACKEND_URL as BACKEND_URL } from "../../config/url";
 
 const Register = () => {
   const usernameRef = useRef();

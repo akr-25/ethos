@@ -1,11 +1,11 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 // import DropDownMenu from "../dropdown.jsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+import { REACT_APP_BACKEND_URL as BACKEND_URL } from "../../config/url";
 
 const selectedTabCSS =
   "text-gray-800 dark:text-white  hover:text-gray-800 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium";
@@ -17,7 +17,25 @@ const Navbar = () => {
   const history = useHistory();
   const { user } = useContext(AuthContext);
   const html = document.querySelector("html");
-  const [currentTab, setCurrentTab] = useState(0);
+
+  // Get the current url
+  const currentUrl = window.location.pathname;
+  const tabsEnum = useMemo(
+    () => ({
+      "/": 0,
+      "/history": 1,
+      "/how-to": 2,
+      "/about-us": 3,
+    }),
+    []
+  );
+
+  const getCurrentTab = useMemo(() => {
+    const tab = tabsEnum[currentUrl];
+    return tab === undefined ? 0 : tab;
+  }, [currentUrl, tabsEnum]);
+
+  const [currentTab, setCurrentTab] = useState(getCurrentTab);
 
   const logOutHandler = async () => {
     localStorage.removeItem("user");
@@ -45,7 +63,7 @@ const Navbar = () => {
             </a>
             <div className='hidden md:block'>
               <div className='ml-10 flex items-baseline space-x-4'>
-                <Link to="/">
+                <Link to='/'>
                   <button
                     className={
                       currentTab === 0 ? selectedTabCSS : unselectedTabCSS
@@ -55,37 +73,43 @@ const Navbar = () => {
                     Predict
                   </button>
                 </Link>
-                <button
-                  className={
-                    currentTab === 1 ? selectedTabCSS : unselectedTabCSS
-                  }
-                  onClick={() => setCurrentTab(1)}
-                >
-                  History
-                </button>
-                <button
-                  className={
-                    currentTab === 2 ? selectedTabCSS : unselectedTabCSS
-                  }
-                  onClick={() => setCurrentTab(2)}
-                >
-                  How it works?
-                </button>
-                <button
-                  className={
-                    currentTab === 3 ? selectedTabCSS : unselectedTabCSS
-                  }
-                  onClick={() => setCurrentTab(3)}
-                >
-                  About us
-                </button>
+                <Link to='/history'>
+                  <button
+                    className={
+                      currentTab === 1 ? selectedTabCSS : unselectedTabCSS
+                    }
+                    onClick={() => setCurrentTab(1)}
+                  >
+                    History
+                  </button>
+                </Link>
+                <Link to='/how-to'>
+                  <button
+                    className={
+                      currentTab === 2 ? selectedTabCSS : unselectedTabCSS
+                    }
+                    onClick={() => setCurrentTab(2)}
+                  >
+                    How it works?
+                  </button>
+                </Link>
+                <Link to='/about-us'>
+                  <button
+                    className={
+                      currentTab === 3 ? selectedTabCSS : unselectedTabCSS
+                    }
+                    onClick={() => setCurrentTab(3)}
+                  >
+                    About us
+                  </button>
+                </Link>
               </div>
             </div>
           </div>
           <div className='hidden md:block'>
             <div className='ml-4 flex items-center md:ml-6'>
               <a
-                href='https://github.com/akr25'
+                href='https://github.com/akr-25/ethos'
                 className='p-1 rounded-full text-gray-400 focus:outline-none hover:text-gray-200 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white'
               >
                 <span className='sr-only'>View github</span>
@@ -106,7 +130,7 @@ const Navbar = () => {
                   withDivider={true}
                   items={[{ label: "hello", desc: "hehe" }]}
                 /> */}
-              {user ? (
+              {/* {user ? (
                 <>
                   <div className='ml-3 relative'>
                     <p className='flex items-center justify-center w-full rounded-md  px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-50'>
@@ -140,9 +164,9 @@ const Navbar = () => {
                     </Link>
                   </div>
                 </>
-              )}
+              )} */}
 
-              <div className='flex justify-content'>
+              {/* <div className='flex justify-content'>
                 <div className='relative inline-block w-10 mr-2 align-middle select-none'>
                   <input
                     type='checkbox'
@@ -158,7 +182,7 @@ const Navbar = () => {
                   />
                 </div>
                 <span className='text-gray-400 font-medium'>Dark Mode</span>
-              </div>
+              </div>*/}
             </div>
           </div>
           <div className={"-mr-2 flex md:hidden"}>
